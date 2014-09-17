@@ -106,20 +106,8 @@ module Workflow
       from = current_state
       to = spec.states[event.transitions_to]
 
-      # validate object
-      if self.respond_to?(:valid?)
-        old_state = load_workflow_state
-        persist_workflow_state to.to_s
-        would_be_valid = self.valid?
-
-        persist_workflow_state old_state
-
-        unless would_be_valid
-          self.valid?
-          halt!("Validation error")
-          return false
-        end
-      end
+      validate(to)
+      return false if @halted
 
       run_before_transition(from, to, name, *args)
       return false if @halted
@@ -180,6 +168,21 @@ module Workflow
       if !spec.states[event.transitions_to]
         raise WorkflowError.new("Event[#{event.name}]'s " +
             "transitions_to[#{event.transitions_to}] is not a declared state.")
+      end
+    end
+
+    def validate(to)
+      if self.respond_to?(:valid?)
+        old_state = load_workflow_state
+        persist_workflow_state to.to_s
+        would_be_valid = self.valid?
+
+        persist_workflow_state old_state
+
+        unless would_be_valid
+          self.valid?
+          halt!("Validation error")
+        end
       end
     end
 
