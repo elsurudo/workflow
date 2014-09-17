@@ -106,6 +106,21 @@ module Workflow
       from = current_state
       to = spec.states[event.transitions_to]
 
+      # validate object
+      if self.respond_to?(:valid?)
+        old_state = load_workflow_state
+        persist_workflow_state to.to_s
+        would_be_valid = self.valid?
+
+        persist_workflow_state old_state
+
+        unless would_be_valid
+          self.valid?
+          halt!("Validation error")
+          return false
+        end
+      end
+
       run_before_transition(from, to, name, *args)
       return false if @halted
 
