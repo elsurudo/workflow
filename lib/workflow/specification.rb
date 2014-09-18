@@ -5,12 +5,17 @@ require 'workflow/errors'
 
 module Workflow
   class Specification
-    attr_accessor :states, :initial_state, :meta,
+    attr_accessor :states, :initial_state, :meta, :options,
       :on_transition_proc, :before_transition_proc, :after_transition_proc, :on_error_proc
 
-    def initialize(meta = {}, &specification)
+    def initialize(meta = {}, options = {}, &specification)
+      options[:validate] = options[:validate].nil? ? false : options[:validate]
+      options[:validation_method] ||= :valid?
+
       @states = Hash.new
       @meta = meta
+      @options = options
+
       instance_eval(&specification)
     end
 

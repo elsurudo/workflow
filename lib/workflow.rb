@@ -19,8 +19,8 @@ module Workflow
       @workflow_state_column_name ||= :workflow_state
     end
 
-    def workflow(&specification)
-      assign_workflow Specification.new(Hash.new, &specification)
+    def workflow(options = {}, &specification)
+      assign_workflow Specification.new(Hash.new, options, &specification)
     end
 
     private
@@ -106,8 +106,10 @@ module Workflow
       from = current_state
       to = spec.states[event.transitions_to]
 
-      validate(to)
-      return false if @halted
+      if self.class.workflow_spec.options[:validate]
+        validate(to)
+        return false if @halted
+      end
 
       run_before_transition(from, to, name, *args)
       return false if @halted
@@ -172,10 +174,10 @@ module Workflow
     end
 
     def validate(to)
-      if self.respond_to?(:valid?)
+      if self.respond_to?(self.class.workflow_spec.options[:validation_method])
         old_state = load_workflow_state
         persist_workflow_state to.to_s
-        would_be_valid = self.valid?
+        would_be_valid = self.send(self.class.workflow_spec.options[:validation_method])
 
         persist_workflow_state old_state
 
