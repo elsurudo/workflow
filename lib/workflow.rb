@@ -177,12 +177,12 @@ module Workflow
       if self.respond_to?(self.class.workflow_spec.options[:validation_method])
         old_state = load_workflow_state
         persist_workflow_state to.to_s
+
         would_be_valid = self.send(self.class.workflow_spec.options[:validation_method])
 
         persist_workflow_state old_state
 
         unless would_be_valid
-          self.valid?
           halt!("Validation error")
         end
       end
