@@ -106,7 +106,7 @@ module Workflow
       from = current_state
       to = spec.states[event.transitions_to]
 
-      if self.class.workflow_spec.options[:validate]
+      if self.spec.options[:validate]
         validate(to)
         return false if @halted
       end
@@ -174,11 +174,11 @@ module Workflow
     end
 
     def validate(to)
-      if self.respond_to?(self.class.workflow_spec.options[:validation_method])
+      if self.respond_to?(self.spec.options[:validation_method])
         old_state = load_workflow_state
         persist_workflow_state to.to_s
 
-        would_be_valid = self.send(self.class.workflow_spec.options[:validation_method])
+        would_be_valid = self.send(self.spec.options[:validation_method])
 
         persist_workflow_state old_state
 
