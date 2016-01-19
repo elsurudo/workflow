@@ -180,10 +180,17 @@ module Workflow
 
         would_be_valid = self.send(self.spec.options[:validation_method])
 
+        is_activerecord = self.is_a?(ActiveRecord::Base)
+        validation_errors = self.errors if is_activerecord
+
         persist_workflow_state old_state
 
         unless would_be_valid
-          halt!("Validation error")
+          if is_activerecord
+            halt!("Validation error: #{validation_errors.messages.inspect}")
+          else
+            halt!("Validation error")
+          end
         end
       end
     end
