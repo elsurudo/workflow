@@ -50,8 +50,8 @@ module Workflow
           end
         end
 
-        def workflow_with_scopes(&specification)
-          workflow_without_scopes(&specification)
+        def workflow_with_scopes(options = {}, &specification)
+          workflow_without_scopes(options, &specification)
           states = workflow_spec.states.values
 
           states.each do |state|
