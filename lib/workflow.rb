@@ -13,7 +13,7 @@ module Workflow
       if column_name
         @workflow_state_column_name = column_name.to_sym
       end
-      if !@workflow_state_column_name && superclass.respond_to?(:workflow_column)
+      if !instance_variable_defined?('@workflow_state_column_name') && superclass.respond_to?(:workflow_column)
         @workflow_state_column_name = superclass.workflow_column
       end
       @workflow_state_column_name ||= :workflow_state
@@ -219,6 +219,7 @@ module Workflow
       # 1. public callback method or
       # 2. protected method somewhere in the class hierarchy or
       # 3. private in the immediate class (parent classes ignored)
+      action = action.to_sym
       self.respond_to?(action) or
         self.class.protected_method_defined?(action) or
         self.private_methods(false).map(&:to_sym).include?(action)
