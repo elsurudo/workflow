@@ -1,5 +1,25 @@
 [![Build Status](https://travis-ci.org/geekq/workflow.png?branch=master)](https://travis-ci.org/geekq/workflow) Tested with [different Ruby and Rails versions](https://travis-ci.org/geekq/workflow)
 
+Note: you can find documentation for specific workflow rubygem versions
+at http://rubygems.org/gems/workflow : select a version (optional,
+default is latest release), click "Documentation" link. When reading on
+github.com, the README refers to the upcoming release.
+
+**Note on ActiveRecord/Rails 5.0 Support:** currently the workflow gem only
+contains ActiveRecord integration for versions < 5.0. For now you can use
+[your own state persistence](https://github.com/geekq/workflow#custom-workflow-state-persistence)
+
+Since integration with ActiveRecord makes over 90% of the issues and
+maintenance effort, for including Rails/ActiveRecord 5.0 Support I am
+considering:
+
+* either to split ActiveRecord-Integration to as separate module/gem and allow
+  for independent release life cycle / maintainer
+* or separate only support for ActiveRecord 5.0
+* or use separate branch + version of workflow
+
+More background on
+[Rails integration](http://solnic.eu/2016/05/22/my-time-with-rails-is-up.html#not-a-good-citizen)
 
 What is workflow?
 -----------------
@@ -103,7 +123,7 @@ Installation
     gem install workflow
 
 **Important**: If you're interested in graphing your workflow state machine, you will also need to
-install the `active_support` and `ruby-graphviz` gems.
+install the `activesupport` and `ruby-graphviz` gems.
 
 Versions up to and including 1.0.0 are also available as a single file download -
 [lib/workflow.rb file](https://github.com/geekq/workflow/blob/v1.0.0/lib/workflow.rb).
@@ -421,20 +441,26 @@ representation of the workflow. See below.
 Conditional event transitions
 -----------------------------
 
-Conditions are procs or lambdas added to events, like so:
+Conditions can be a "method name symbol" with a corresponding instance method, a `proc` or `lambda` which are added to events, like so:
 
     state :off
       event :turn_on, :transition_to => :on,
-                      :if => proc { |device| device.battery_level > 0 }
+                      :if => :sufficient_battery_level?
+
       event :turn_on, :transition_to => :low_battery,
-                      :if => proc { |device| device.battery_level > 10 }
+                      :if => proc { |device| device.battery_level > 0 }
+    end
+
+    # corresponding instance method
+    def sufficient_battery_level?
+      battery_level > 10
     end
 
 When calling a `device.can_<fire_event>?` check, or attempting a `device.<event>!`, each event is checked in turn:
 
-* With no :if check, proceed as usual.
-* If an :if check is present, proceed if it evaluates to true, or drop to the next event.
-* If you've run out of events to check (eg. battery_level == 0), then the transition isn't possible.
+* With no `:if` check, proceed as usual.
+* If an `:if` check is present, proceed if it evaluates to true, or drop to the next event.
+* If you've run out of events to check (eg. `battery_level == 0`), then the transition isn't possible.
 
 
 Advanced transition hooks
@@ -637,11 +663,23 @@ when using both a block and a callback method for an event, the block executes p
 Changelog
 ---------
 
+### New in the upcoming version 1.3.0
+
+* Retiring Ruby 1.8.7 and Rails 2 support #118. If you still need this older
+  versions despite security issues and missing updates, you can use
+  workflow 1.2.0 or older. In your Gemfile put
+
+      gem 'workflow', '~> 1.2.0'
+
+  or when using github source just reference the v1.2.0 tag.
+* improved callback method handling: #113 and #125
+
 ### New in the version 1.2.0
 
 * Fix issue #98 protected on\_\* callbacks in Ruby 2
 * #106 Inherit exceptions from StandardError instead of Exception
 * #109 Conditional event transitions, contributed by [damncabbage](http://robhoward.id.au/)
+  Please note: this introduces incompatible changes to the meta data API, see also #131.
 * New policy for supporting other databases - extract to separate
   gems. See the README section above.
 * #111 Custom Versions of Existing Adapters by [damncabbage](http://robhoward.id.au/)
